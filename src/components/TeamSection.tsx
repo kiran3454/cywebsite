@@ -1,5 +1,5 @@
-import React from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
+import { useState, useRef } from 'react';
 
 const teamMembers = [
   {
@@ -115,8 +115,8 @@ interface TeamMemberCardProps {
   isLead?: boolean;
 }
 
-const TeamMemberCard: React.FC<TeamMemberCardProps> = ({ member, index, isLead }) => {
-  const cardRef = React.useRef<HTMLDivElement>(null);
+const TeamMemberCard = ({ member, isLead }: TeamMemberCardProps) => {
+  const cardRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: cardRef,
     offset: ["start end", "end start"]
@@ -126,11 +126,11 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({ member, index, isLead }
   const scale = useTransform(scrollYProgress, [0, 0.5, 1], [0.8, 1, 0.8]);
   const opacity = useTransform(scrollYProgress, [0, 0.5, 1], [0.6, 1, 0.6]);
 
-  const [imageError, setImageError] = React.useState(false);
+  const [hasImageError, setHasImageError] = useState(false);
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     console.log(`Image failed to load for ${member.name}:`, member.image);
-    setImageError(true);
+    setHasImageError(true);
     e.currentTarget.src = `https://source.unsplash.com/random/400x400/?portrait&sig=${member.name}`;
   };
 
@@ -150,21 +150,23 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({ member, index, isLead }
       >
         <div className={`${cardSize} rounded-full overflow-hidden mb-4 shadow-lg transform transition-all duration-300 group-hover:shadow-purple-500/50`}>
           <img
-            src={member.image}
+            src={hasImageError ? `https://source.unsplash.com/random/400x400/?portrait&sig=${member.name}` : member.image}
             alt={member.name}
             className="w-full h-full object-cover"
             onError={handleImageError}
           />
         </div>
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileHover={{ opacity: 1 }}
-          className="absolute inset-0 bg-gradient-to-r from-purple-600/80 to-blue-600/80 rounded-full flex items-center justify-center opacity-0 transition-opacity duration-300"
-        >
-          <div className="text-white text-center p-4">
-            <p className="font-medium">{member.contact}</p>
-          </div>
-        </motion.div>
+        {member.contact && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileHover={{ opacity: 1 }}
+            className="absolute inset-0 bg-gradient-to-r from-purple-600/80 to-blue-600/80 rounded-full flex items-center justify-center opacity-0 transition-opacity duration-300"
+          >
+            <div className="text-white text-center p-4">
+              <p className="font-medium">{member.contact}</p>
+            </div>
+          </motion.div>
+        )}
       </motion.div>
       <h3 className={`${nameSize} font-semibold mt-2 text-white`}>{member.name}</h3>
       <p className="text-purple-200 text-lg">{member.role}</p>
@@ -177,7 +179,7 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({ member, index, isLead }
   );
 };
 
-const TeamSection: React.FC = () => {
+const TeamSection = () => {
   const leadMember = teamMembers.find(member => member.isLead);
   const otherMembers = teamMembers.filter(member => !member.isLead);
 
